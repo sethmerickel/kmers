@@ -9,7 +9,10 @@
 namespace KmerBruteForce
 {
    kmer_vec_type
-   findKmerFrequencies(const std::string& seq, unsigned int kmer_len)
+   findKmerFrequencies(
+      const std::string& seq,
+      unsigned int kmer_len,
+      unsigned int num_kmer)
    {
       auto n = seq.size();
       if (kmer_len > n)
@@ -48,6 +51,9 @@ namespace KmerBruteForce
 
       // sort by counts
       std::sort(begin(kmer_count_vec), end(kmer_count_vec), count_is_greater);
-      return kmer_count_vec;
+      if (num_kmer < kmer_count_vec.size())
+         return kmer_vec_type(begin(kmer_count_vec), begin(kmer_count_vec) + num_kmer);
+      else
+         return kmer_count_vec;
    }
 }

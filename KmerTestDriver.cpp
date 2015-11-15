@@ -2,15 +2,17 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <sstream>
 #include <string>
 #include <utility>
 
 #include "KmerBruteForce.h"
 
 std::string usage =
-"Usage: KmerTestDriver [fastq file]";
+"Usage: KmerTestDriver FASTQ_FILENAME KMER_LENGTH NUMBER_OF_KMER";
 
-constexpr unsigned int kmer_len = 4;
+unsigned int kmer_len = 30;
+unsigned int num_kmers = 25;
 
 std::string getStringFromFile(const char* file)
 {
@@ -29,6 +31,7 @@ std::string getStringFromFile(const char* file)
    }
 }
 
+// Functor for printing std::pair<T1, T2> 
 template <typename T>
 struct pairPrinter;
 
@@ -52,19 +55,43 @@ int main(int argc, char* argv[])
       std::string seq; 
       if (argc == 1)
       {
-         seq = "AAAAQWERKFJKTAAAAQEWRFLKJAAAA;LJF;LJVAAAA;LKFJA;LKAAAA";
+         // Run with no arguments so just use a simple test case
+         seq = "123456789123456789123456789123" \
+            "123456789123456789123456789123" \
+            "123456789123456789123456789123" \
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" \
+            "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
       }
-      else if (argc == 2)
+      else if (argc == 4)
       {         
+         // parse fastq file
          seq = getStringFromFile(argv[1]);
+
+         // second argument is the kmer length
+         std::stringstream ss_len(argv[2]);
+         if (!(ss_len >> kmer_len)) throw std::exception("Bad input args");
+
+         // third argument is the number of kmers to return
+         std::stringstream ss_num(argv[3]);
+         if (!(ss_num >> num_kmers)) throw std::exception("Bad input args");
       }
       else
       {
-         std::cout << usage << std::endl;
+         // wrong number of arguments
+         throw std::exception(usage.c_str());
       }
 
-      auto kmers = KmerBruteForce::findKmerFrequencies(seq, kmer_len);
+      // Find the most frequently occuring kmers
+      auto kmers = KmerBruteForce::findKmerFrequencies(seq, kmer_len, num_kmers);
 
+      // Do some simple checks on the output for testing
+      if (kmers.size() > num_kmers)
+         throw std::exception("kmer algorithm failed.  Bug!");
+
+      if (!kmers.empty() && kmers[0].first.size() != kmer_len)
+         throw std::exception("kmer algorithm failed.  Bug!");
+      
+      // Print the results to stdout
       using value_type = KmerBruteForce::kmer_vec_type::value_type;
       std::for_each(begin(kmers), end(kmers), pairPrinter<value_type>{std::cout});
    }
